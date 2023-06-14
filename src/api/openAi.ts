@@ -8,7 +8,7 @@ const openApi = axios.create({
   baseURL: `${apiUrl}`,
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${apiKey}`,
+    'Authorization': `Bearer ${apiKey}`,
   },
 });
 
@@ -19,7 +19,7 @@ export async function postGenerateImg(
   try {
     const payload = {
       prompt: prompt,
-      n: 3,
+      n: 1,
       size: '1024x1024',
     };
     const response = await openApi.post('/images/generations', payload);
@@ -47,6 +47,7 @@ export async function improvePrompt(promptText: string) {
       temperature: config.completions.temperature,
     };
     const response = await openApi.post('/completions', payload);
+    console.log(response.data.choices[0].text)
     return response.data.choices[0].text;
   } catch (e) {
     console.error('improvePrompt Error:', e);

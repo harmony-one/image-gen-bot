@@ -3,15 +3,17 @@ import { improvePrompt, postGenerateImg } from "./api/openAi";
 import { config } from "./config";
 import express from "express";
 
+console.log('CONFIG',config)
+
 const token = config.telegramAPI;
 const bot = new Bot(token || "");
 
 bot.command("help", (ctx) => {
-  const helpText = `Hello! I'm a Telegram bot that generates AI Image using OpenAI service.
+  const helpText = `Hello! I'm a Telegram bot that generates AI Images using OpenAI technology.
 
   <b>Commands</b>
   /help - This menu
-  /gen [text] - Generates an Image from given prompt
+  /gen [text] - Generates an Image from a given prompt
   /genEn [text] - Generates an Image from an enhanced prompt`;
 
   ctx.reply(helpText, { parse_mode: "HTML" });
@@ -61,4 +63,19 @@ bot.command("genEn", async (ctx) => {
   }
 });
 
-bot.start();
+improvePrompt('yellow soap')
+
+if (config.isProduction) {
+
+  const app = express();
+  app.use(express.json());
+  app.use(webhookCallback(bot, "express"));
+
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`Bot listening on port ${PORT}`);
+  });
+} else {
+  console.log('Bot started (development)');
+  bot.start();
+}

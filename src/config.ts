@@ -1,6 +1,6 @@
-require('dotenv').config()
+// require('dotenv').config()
 
-const config = {
+export const config = {
   telegramAPI : process.env.TELEGRAM_HTTP_KEY,
   openAiKey: process.env.OPENAI_API_KEY,
   openAiUrl: process.env.OPENAI_API_URL,
@@ -10,5 +10,3 @@ const config = {
     temperature: 0.8
   }
 }
-
-module.exports = { config }

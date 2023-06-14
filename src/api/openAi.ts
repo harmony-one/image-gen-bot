@@ -1,5 +1,5 @@
-import { config } from "../config";
-import axios from "axios";
+import { config } from '../config';
+import axios from 'axios';
 
 const apiKey = config.openAiKey;
 const apiUrl = config.openAiUrl;
@@ -7,7 +7,7 @@ const apiUrl = config.openAiUrl;
 const openApi = axios.create({
   baseURL: `${apiUrl}`,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     Authorization: `Bearer ${apiKey}`,
   },
 });
@@ -20,19 +20,19 @@ export async function postGenerateImg(
     const payload = {
       prompt: prompt,
       n: 3,
-      size: "1024x1024",
+      size: '1024x1024',
     };
-    const response = await openApi.post("/images/generations", payload);
+    const response = await openApi.post('/images/generations', payload);
 
     if (response.status === 200) {
       sendProgressToUser();
     } else {
-      throw "There was an error generating the image";
+      throw 'There was an error generating the image';
     }
     // const data = await response.json();
     return response.data.data;
   } catch (error) {
-    console.error("postGenerateImg ERROR:", error);
+    console.error('postGenerateImg ERROR:', error);
     throw error;
   }
 }
@@ -46,10 +46,10 @@ export async function improvePrompt(promptText: string) {
       max_tokens: config.completions.maxTokens,
       temperature: config.completions.temperature,
     };
-    const response = await openApi.post("/completions", payload);
+    const response = await openApi.post('/completions', payload);
     return response.data.choices[0].text;
   } catch (e) {
-    console.error("improvePrompt Error:", e);
+    console.error('improvePrompt Error:', e);
     return null;
   }
 }

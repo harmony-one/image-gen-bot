@@ -6,17 +6,16 @@ import express from "express";
 const token = config.telegramAPI;
 const bot = new Bot(token || "");
 
-// // Matches "/echo [whatever]"
-// bot.onText(/\/help(.+)/, (msg, match) => {
-//   console.log('onText',match[0],match[1])
-//   // console.log(msg)
-//     console.log(match[1])
-//     let chatId = msg.chat.id;
+bot.command("help", (ctx) => {
+  const helpText = `Hello! I'm a Telegram bot that generates AI Image using OpenAI service.
 
-//     let resp = 'This bot '
+  <b>Commands</b>
+  /help - This menu
+  /gen [text] - Generates an Image from given prompt
+  /genEn [text] - Generates an Image from an enhanced prompt`;
 
-//     bot.sendMessage(chatId, resp);
-// });
+  ctx.reply(helpText, { parse_mode: "HTML" });
+});
 
 bot.command("gen", async (ctx) => {
   const prompt = ctx.match;
@@ -29,8 +28,8 @@ bot.command("gen", async (ctx) => {
       ctx.reply("generating the image...")
     );
     imgs.map((img: any) => {
-      ctx.replyWithPhoto(img.url)
-    })
+      ctx.replyWithPhoto(img.url);
+    });
   } catch (e) {
     ctx.reply("There was an error while generating the image");
   }
@@ -49,13 +48,13 @@ bot.command("genEn", async (ctx) => {
       ctx.reply(
         `The following description was added to your prompt: ${upgratedPrompt}`
       );
-    } 
+    }
     const imgs = await postGenerateImg(upgratedPrompt || prompt, () =>
-        ctx.reply("generating the image...")
-      );
-      imgs.map((img: any) => {
-        ctx.replyWithPhoto(img.url)
-      })
+      ctx.reply("generating the image...")
+    );
+    imgs.map((img: any) => {
+      ctx.replyWithPhoto(img.url);
+    });
   } catch (e) {
     console.log("/genEn Error", e);
     ctx.reply("There was an error while generating the image");

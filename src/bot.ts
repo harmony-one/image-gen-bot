@@ -63,8 +63,6 @@ bot.command("genEn", async (ctx) => {
   }
 });
 
-improvePrompt('yellow soap')
-
 if (config.isProduction) {
 
   const app = express();

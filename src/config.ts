@@ -13,7 +13,8 @@ export const config = {
     temperature: 0.8
   },
   sessionDefault: {
-    numImages: 3,
-    lastImages: []
+    numImages: 1,
+    lastImages: [],
+    imgSize: '1024x1024'
   }
 }

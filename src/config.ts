@@ -11,5 +11,9 @@ export const config = {
     model: 'text-davinci-003',
     maxTokens: 140,
     temperature: 0.8
+  },
+  sessionDefault: {
+    numImages: 3,
+    lastImages: []
   }
 }

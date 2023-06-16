@@ -20,6 +20,10 @@ export const getImage = async (filePath: string, ctx: any) => {
   const imageInfo = await sharp(imageFilename)
     .toFormat("png")
     .ensureAlpha()
+    .resize({
+      width: 1024,
+      height: 1024,
+    })
     .toFile(convertedFilename);
   fs.unlinkSync(imageFilename);
   console.log(imageInfo);
@@ -46,10 +50,10 @@ export const getImage = async (filePath: string, ctx: any) => {
 
   return {
     file: fs.createReadStream(convertedFilename),
-    fileName: convertedFilename
-  }
+    fileName: convertedFilename,
+  };
 };
 
 export const deleteFile = (fileName: string) => {
   fs.unlinkSync(fileName);
-}
+};

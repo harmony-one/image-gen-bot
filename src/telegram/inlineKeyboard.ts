@@ -7,7 +7,7 @@ interface Menu {
 }
 
 export const mainMenu = {
-  menuText: `\n\nWith the following menu, you can choose how many images can be generated on each prompt. Also, you can change the image size`,
+  menuText: `\n\n<b>Change images sizes and numbers</b>\nWith the following menu, you can choose how many images can be generated on each prompt. Also, you can change the image size`,
   menu: new InlineKeyboard()
     .text("Change the image number", "numImagesOptions")
     .row()

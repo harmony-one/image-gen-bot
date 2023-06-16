@@ -4,7 +4,7 @@
 #
 
 app = "image-gen-bot"
-primary_region = "bog"
+primary_region = ""
 
 [http_service]
   internal_port = 3000

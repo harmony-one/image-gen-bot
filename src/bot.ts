@@ -17,7 +17,11 @@ import {
   imgSizeOptions,
 } from "./telegram/inlineKeyboard";
 
-import { improvePrompt, postGenerateImg, alterGeneratedImg } from "./api/openAi"; //editGeneatedImg
+import {
+  improvePrompt,
+  postGenerateImg,
+  alterGeneratedImg,
+} from "./api/openAi"; //editGeneatedImg
 import { config } from "./config";
 import { appText } from "./util/text";
 
@@ -115,17 +119,12 @@ bot.command("gen", async (ctx) => {
   try {
     const numImages = await ctx.session.numImages;
     const imgSize = await ctx.session.imgSize;
-    const imgs = await postGenerateImg(
-      prompt,
-      ctx,
-      numImages,
-      imgSize
-    );
+    const imgs = await postGenerateImg(prompt, ctx, numImages, imgSize);
     imgs.map((img: any) => {
       ctx.replyWithPhoto(img.url);
     });
   } catch (e) {
-    console.log('/gen Error', e)
+    console.log("/gen Error", e);
     ctx.reply("There was an error while generating the image");
   }
 });
@@ -157,18 +156,19 @@ bot.command("genEn", async (ctx) => {
       ctx.replyWithPhoto(img.url);
     });
   } catch (e) {
-    console.log('/genEn Error', e);
+    console.log("/genEn Error", e);
     ctx.reply("There was an error while generating the image");
   }
 });
 
 bot.on("message", async (ctx) => {
   try {
-    if (ctx.message.reply_to_message?.photo) {
-      if (ctx.message.text) {
-        const prompt = ctx.message.text;
-        const file_id = ctx.message.reply_to_message?.photo[0].file_id;
-        const file = await ctx.api.getFile(file_id);
+    const photo = ctx.message.photo || ctx.message.reply_to_message?.photo;
+    if (photo) {
+      const prompt = ctx.message.caption || ctx.message.text;
+      if (prompt) {
+        const file_id = photo.pop()?.file_id; // with pop() get full image quality
+        const file = await ctx.api.getFile(file_id!);
         const filePath = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
         console.log("File path", filePath);
         const numImages = await ctx.session.numImages;
@@ -199,8 +199,6 @@ if (config.isProduction) {
   // app.use(`/${bot.token}`, webhookCallback(bot, "express"));
   app.use(webhookCallback(bot, "express"));
   app.use((_req, res) => res.status(200).send());
-
-  
 
   const PORT = config.port;
   //@ts-ignore

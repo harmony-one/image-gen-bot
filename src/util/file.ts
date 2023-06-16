@@ -25,10 +25,10 @@ export const getImage = async (filePath: string, ctx: any) => {
       height: 1024,
     })
     .toFile(convertedFilename);
-  fs.unlinkSync(imageFilename);
+  deleteFile(imageFilename);
   console.log(imageInfo);
   if (imageInfo.format !== "png") {
-    fs.unlinkSync(convertedFilename);
+    deleteFile(convertedFilename);
     ctx.reply("Please send a valid PNG image.");
     return;
   }
@@ -36,14 +36,14 @@ export const getImage = async (filePath: string, ctx: any) => {
   const imageSize = fs.statSync(convertedFilename).size;
   const maxSize = 4 * 1024 * 1024; // 4MB
   if (imageSize > maxSize) {
-    fs.unlinkSync(convertedFilename);
+    deleteFile(convertedFilename);
     ctx.reply("The image size exceeds the limit of 4MB.");
     return;
   }
 
   const imageDimensions = await sharp(convertedFilename).metadata();
   if (imageDimensions.width !== imageDimensions.height) {
-    fs.unlinkSync(convertedFilename);
+    deleteFile(convertedFilename);
     ctx.reply("Please send a square image.");
     return;
   }

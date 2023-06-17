@@ -23,7 +23,6 @@
     "lodash": "^4.17.21",
     "node-telegram-bot-api": "^0.61.0",
     "openai": "^3.3.0",
-    "queue": "6.0.2",
     "sharp": "^0.32.1"
   },
   "devDependencies": {

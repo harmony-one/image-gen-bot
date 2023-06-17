@@ -26,7 +26,6 @@ export const imgGen = async (data: WorkerPayload) => {
 export const imgGenEnhanced = async (data: WorkerPayload) => {
   const { chatId, prompt, numImages, imgSize } = data
   try {
-    console.log('running')
     const upgratedPrompt = await improvePrompt(prompt);
     if (upgratedPrompt) {
       bot.api.sendMessage(chatId, 

@@ -142,16 +142,15 @@ bot.command("genEn", async (ctx) => {
 });
 
 bot.on("message", async (ctx) => {
-  console.log(ctx.message.text,ctx.chat.id,ctx.chat.type)
   try {
     const photo = ctx.message.photo || ctx.message.reply_to_message?.photo;
     if (photo) {
+      console.log("Alter img command");
       const prompt = ctx.message.caption || ctx.message.text;
       if (prompt) {
         const file_id = photo.pop()?.file_id; // with pop() get full image quality
         const file = await ctx.api.getFile(file_id!);
         const filePath = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
-        console.log("File path", filePath);
         const workerPayload = {
           chatId: ctx.chat.id,
           prompt: prompt,

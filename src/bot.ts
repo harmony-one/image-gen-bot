@@ -7,7 +7,9 @@ import {
   MemorySessionStorage,
 } from "grammy";
 import express from "express";
+import { Queue } from "bullmq";
 
+import { taskWorker } from './workers/task-worker'
 import {
   mainMenu,
   numImagesOptions,
@@ -16,16 +18,8 @@ import {
   getMenu,
   imgSizeOptions,
 } from "./telegram/inlineKeyboard";
-
-import {
-  improvePrompt,
-  postGenerateImg,
-  alterGeneratedImg,
-} from "./api/openAi"; //editGeneatedImg
 import { config } from "./config";
 import { appText } from "./util/text";
-
-console.log("CONFIG", config.isProduction, config.port, config.completions);
 
 interface Image {
   url: string;
@@ -39,7 +33,12 @@ interface SessionData {
 export type MyContext = Context & SessionFlavor<SessionData>;
 
 const token = config.telegramAPI;
-const bot = new Bot<MyContext>(token || "");
+
+export const bot = new Bot<MyContext>(token || "");
+
+console.log("CONFIG", config.isProduction, config.port, config.completions);
+
+const taskQueue = new Queue('botTask', { connection: config.queue.connection });
 
 function initial(): SessionData {
   return {
@@ -116,17 +115,13 @@ bot.command("gen", async (ctx) => {
     ctx.reply("Error: Missing prompt");
     return;
   }
-  try {
-    const numImages = await ctx.session.numImages;
-    const imgSize = await ctx.session.imgSize;
-    const imgs = await postGenerateImg(prompt, ctx, numImages, imgSize);
-    imgs.map((img: any) => {
-      ctx.replyWithPhoto(img.url);
-    });
-  } catch (e) {
-    console.log("/gen Error", e);
-    ctx.reply("There was an error while generating the image");
+  const workerPayload = {
+    chatId: ctx.chat.id,
+    prompt: ctx.match,
+    numImages: await ctx.session.numImages,
+    imgSize: await ctx.session.imgSize
   }
+  await taskQueue.add('gen', workerPayload );
 });
 
 bot.command("genEn", async (ctx) => {
@@ -136,32 +131,18 @@ bot.command("genEn", async (ctx) => {
     ctx.reply("Error: Missing prompt");
     return;
   }
-  try {
-    ctx.reply("generating improved prompt...");
-    const upgratedPrompt = await improvePrompt(prompt);
-    if (upgratedPrompt) {
-      ctx.reply(
-        `The following description was added to your prompt: ${upgratedPrompt}`
-      );
-    }
-    const numImages = await ctx.session.numImages;
-    const imgSize = await ctx.session.imgSize;
-    const imgs = await postGenerateImg(
-      upgratedPrompt || prompt,
-      ctx,
-      numImages,
-      imgSize
-    );
-    imgs.map((img: any) => {
-      ctx.replyWithPhoto(img.url);
-    });
-  } catch (e) {
-    console.log("/genEn Error", e);
-    ctx.reply("There was an error while generating the image");
+  const workerPayload = {
+    chatId: ctx.chat.id,
+    prompt: ctx.match,
+    numImages: await ctx.session.numImages,
+    imgSize: await ctx.session.imgSize
   }
+  await taskQueue.add('genEn', workerPayload );
+  ctx.reply("generating improved prompt...");
 });
 
 bot.on("message", async (ctx) => {
+  console.log(ctx.message.text,ctx.chat.id,ctx.chat.type)
   try {
     const photo = ctx.message.photo || ctx.message.reply_to_message?.photo;
     if (photo) {
@@ -171,18 +152,14 @@ bot.on("message", async (ctx) => {
         const file = await ctx.api.getFile(file_id!);
         const filePath = `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
         console.log("File path", filePath);
-        const numImages = await ctx.session.numImages;
-        const imgSize = await ctx.session.imgSize;
-        const imgs = await alterGeneratedImg(
-          prompt!,
-          filePath,
-          ctx,
-          numImages,
-          imgSize
-        );
-        imgs!.map((img: any) => {
-          ctx.replyWithPhoto(img.url);
-        });
+        const workerPayload = {
+          chatId: ctx.chat.id,
+          prompt: prompt,
+          numImages: await ctx.session.numImages,
+          imgSize: await ctx.session.imgSize,
+          filePath: filePath
+        }
+        await taskQueue.add('alterGeneratedImg', workerPayload );
       } else {
         ctx.reply("Please add edit prompt");
       }
@@ -193,6 +170,21 @@ bot.on("message", async (ctx) => {
   }
 });
 
+taskWorker.run()
+
+taskQueue.on('error', (e) => {
+  console.log('taskQueue Error', e.message)
+})
+
+taskWorker.on('error', (e) => {
+  console.log('taskWorker Error', e.message)
+})
+
+process.on("SIGINT", async () => {
+  await taskWorker.close();
+});
+
+
 if (config.isProduction) {
   const app = express();
   app.use(express.json());
@@ -202,10 +194,10 @@ if (config.isProduction) {
 
   const PORT = config.port;
   //@ts-ignore
-  app.listen(PORT, () => console.log(`listening on port ${PORT}`));
-  // app.listen(PORT, "0.0.0.0", () => {
-  //   console.log(`Bot listening on port ${PORT}`);
-  // });
+  // app.listen(PORT, () => console.log(`listening on port ${PORT}`));
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Bot listening on port ${PORT}`);
+  });
 } else {
   console.log("Bot started (development)");
   bot.start();

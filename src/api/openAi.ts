@@ -5,6 +5,7 @@ import { Configuration,
 
 import { config } from "../config";
 import { deleteFile, getImage } from "../util/file";
+import { bot } from "../bot";
 
 const apiKey = config.openAiKey;
 
@@ -16,7 +17,6 @@ const openai = new OpenAIApi(configuration);
 
 export async function postGenerateImg(
   prompt: string,
-  ctx: any,
   numImgs?: number,
   imgSize?: string
 ) {
@@ -27,7 +27,6 @@ export async function postGenerateImg(
       size: imgSize ? imgSize : config.sessionDefault.imgSize,
     };
     const response = await openai.createImage(payload as CreateImageRequest)
-    ctx.reply("generating the output...");
     return response.data.data;
   } catch (error) {
     throw error;
@@ -35,20 +34,20 @@ export async function postGenerateImg(
 }
 
 export async function alterGeneratedImg(
+  chatId: number,
   prompt: string,
-  image: string,
-  ctx: any,
-  numImgs?: number,
+  filePath: string,
+  numImages?: number,
   imgSize?: string
 ) {
   try {
-    const imageData = await getImage(image, ctx);
-    if (imageData) {
-      ctx.reply("validating image... ");
+    const imageData = await getImage(filePath);
+    if (!imageData.error) {
+      bot.api.sendMessage(chatId,"validating image... ");
       let response;
       const size = imgSize ? imgSize : config.sessionDefault.imgSize;
       if (isNaN(+prompt)) {
-        const n = numImgs ? numImgs : config.sessionDefault.numImages;
+        const n = numImages ? numImages : config.sessionDefault.numImages;
         response = await openai.createImageEdit(
           imageData.file,
           prompt,
@@ -65,9 +64,11 @@ export async function alterGeneratedImg(
           size
         );
       }
-      ctx.reply("generating the output...");
-      deleteFile(imageData.fileName)
+      bot.api.sendMessage(chatId,"generating the output...");
+      deleteFile(imageData.fileName!)
       return response.data.data;
+    } else {
+      bot.api.sendMessage(chatId,imageData.error)
     }
   } catch (error: any) {
     throw error;

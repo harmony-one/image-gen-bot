@@ -15,5 +15,12 @@ export const config = {
     numImages: 1,
     lastImages: [],
     imgSize: '1024x1024'
+  },
+  queue: {
+    connection: {
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT || "6379"),
+      password: process.env.REDIS_DEFAULT_PASSWORD
+    }
   }
 }
